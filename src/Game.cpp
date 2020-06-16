@@ -1,9 +1,11 @@
 #include <iostream>
 #include "./Constants.h"
 #include "./Game.h"
+#include "../lib/glm/glm.hpp"
 
 Game::Game()
 {
+    
     this->isRunning = false;
 }
 
@@ -16,10 +18,8 @@ bool Game::IsRunning() const
     return this->isRunning;
 }
 
-float projectilePosX = 0.0f;
-float projectilePosY = 0.0f;
-float projectileVelX = 20.0f;
-float projectileVelY = 30.0f;
+glm::vec2 projectilePos = glm::vec2(0.0f,0.0f);
+glm::vec2 projectileVel = glm::vec2(20.0f,20.0f);
 
 void Game::Initialize(int width, int height)
 {
@@ -28,7 +28,7 @@ void Game::Initialize(int width, int height)
         std::cerr << "Error initializing SDL" << std::endl;
         return;
     }
-    window = SDL_CreateWindow("2DGameEngine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_BORDERLESS);
+    window = SDL_CreateWindow("Simple 2D Game Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
 
     if (!window)
     {
@@ -74,11 +74,17 @@ void Game::ProcessInput()
 }
 
 void Game::Update() {
-    // wait until  the last frame
-    while(!SDL_TICKS_PASSED(SDL_GetTicks(), ticksLastFrame + FRAME_TARGET_TIME));
 
     //Delta time is the difference in ticks from last fram converted to seconds
     float deltaTime = (SDL_GetTicks() - ticksLastFrame) / 1000.0f;
+
+
+    int timeToWait = FRAME_TARGET_TIME - (SDL_GetTicks() - ticksLastFrame);
+
+    if(timeToWait > 0 && timeToWait <= FRAME_TARGET_TIME)
+    {
+        SDL_Delay(timeToWait);
+    }
 
     //Clamp deltaTime to a maximum value
     deltaTime = (deltaTime > 0.05f) ? 0.05f : deltaTime;
@@ -86,16 +92,19 @@ void Game::Update() {
     //Sets the new ticks for the current frame to be used in the next pass
     ticksLastFrame = SDL_GetTicks();
 
-    projectilePosX += projectileVelX * deltaTime;
-    projectilePosY += projectileVelY * deltaTime;
+    // use deltatime to update my game objects
+    projectilePos = glm::vec2(
+        projectilePos.x + projectileVel.x * deltaTime,
+        projectilePos.y + projectileVel.y * deltaTime);
+
 }
 
 void Game::Render() {
     SDL_SetRenderDrawColor(renderer, 21,21,21,255);
     SDL_RenderClear(renderer);
     SDL_Rect projectile {
-        (int)projectilePosX,
-        (int)projectilePosY,
+        (int)projectilePos.x,
+        (int)projectilePos.y,
         10,
         10
     };
